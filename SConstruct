@@ -218,8 +218,6 @@ def FinalizeOptions():
 
 env.SetupOptions = SetupOptions
 env.FinalizeOptions = FinalizeOptions
-
-Export("env")
 env.GlobRecursive = GlobRecursive
 
 Return("env")
