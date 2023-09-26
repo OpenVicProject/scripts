@@ -214,7 +214,7 @@ def FinalizeOptions():
             Exit(255)
 
         env.Tool("compilation_db")
-        env.Alias("compiledb", env.CompilationDatabase('../compile_commands.json'))
+        env.Alias("compiledb", env.CompilationDatabase('compile_commands.json'))
 
 env.SetupOptions = SetupOptions
 env.FinalizeOptions = FinalizeOptions
