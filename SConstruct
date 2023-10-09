@@ -63,7 +63,6 @@ platforms = ("linux", "macos", "windows", "android", "ios", "javascript")
 unsupported_known_platforms = ("android", "ios", "javascript")
 
 def SetupOptions():
-
     # Default num_jobs to local cpu count if not user specified.
     # SCons has a peculiarity where user-specified options won't be overridden
     # by SetOption, so we can rely on this to know if we should use our default.
@@ -82,7 +81,7 @@ def SetupOptions():
             )
             env.SetOption("num_jobs", safer_cpu_count)
 
-    opts = OptionsClass(ARGUMENTS)
+    opts = OptionsClass(ARGUMENTS.copy())
 
     opts.Add(
         EnumVariable(
