@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# This file is heavily based on https://github.com/godotengine/godot-cpp/blob/8155f35b29b4b08bc54b2eb0c57e1e9effe9f093/SConstruct
+# This file is heavily based on https://github.com/godotengine/godot-cpp/blob/df5b1a9a692b0d972f5ac3c853371594cdec420b/SConstruct and https://github.com/godotengine/godot-cpp/blob/df5b1a9a692b0d972f5ac3c853371594cdec420b/tools/godotcpp.py
 import os
 import platform
 import sys
@@ -11,6 +11,13 @@ import SCons
 from build.option_handler import OptionsClass
 from build.glob_recursive import GlobRecursive
 from build.cache import show_progress
+
+def normalize_path(val, env):
+    return val if os.path.isabs(val) else os.path.join(env.Dir("#").abspath, val)
+
+def validate_parent_dir(key, val, env):
+    if not os.path.isdir(normalize_path(os.path.dirname(val), env)):
+        raise UserError("'%s' is not a directory: %s" % (key, os.path.dirname(val)))
 
 # Try to detect the host platform automatically.
 # This is used if no `platform` argument is passed
@@ -111,6 +118,14 @@ def SetupOptions():
         )
     )
 
+    opts.Add(
+        BoolVariable(
+            "disable_exceptions",
+            "Force disabling exception handling code",
+            default=env.get("disable_exceptions", True),
+        )
+    )
+
     # Add platform options
     tools = {}
     for pl in set(platforms) - set(unsupported_known_platforms):
@@ -130,7 +145,22 @@ def SetupOptions():
         )
     )
 
-    opts.Add(BoolVariable("compiledb", "Generate compilation DB (`compile_commands.json`) for external tools", False))
+     # compiledb
+    opts.Add(
+        BoolVariable(
+            key="compiledb",
+            help="Generate compilation DB (`compile_commands.json`) for external tools",
+            default=env.get("compiledb", False),
+        )
+    )
+    opts.Add(
+        PathVariable(
+            key="compiledb_file",
+            help="Path to a custom `compile_commands.json` file",
+            default=env.get("compiledb_file", "compile_commands.json"),
+            validator=validate_parent_dir,
+        )
+    )
     opts.Add(BoolVariable("verbose", "Enable verbose output for the compilation", False))
     opts.Add(BoolVariable("intermediate_delete", "Enables automatically deleting unassociated intermediate binary files.", True))
     opts.Add(BoolVariable("progress", "Show a progress indicator during compilation", True))
@@ -178,6 +208,8 @@ def FinalizeOptions():
                 print("Unsupported CPU architecture: " + host_machine)
                 Exit()
 
+    print("Building for architecture " + env["arch"] + " on platform " + env["platform"])
+
     tool = Tool(env["platform"], toolpath=env.TOOLPATH)
 
     if tool is None or not tool.exists(env):
@@ -186,7 +218,15 @@ def FinalizeOptions():
     tool.generate(env)
     target_tool.generate(env)
 
-    print("Building for architecture " + env["arch"] + " on platform " + env["platform"])
+    # Disable exception handling. Godot doesn't use exceptions anywhere, and this
+    # saves around 20% of binary size and very significant build time.
+    if env["disable_exceptions"]:
+        if env.get("is_msvc", False):
+            env.Append(CPPDEFINES=[("_HAS_EXCEPTIONS", 0)])
+        else:
+            env.Append(CXXFLAGS=["-fno-exceptions"])
+    elif env.get("is_msvc", False):
+        env.Append(CXXFLAGS=["/EHsc"])
 
     # Require C++20
     if env.get("is_msvc", False):
@@ -200,6 +240,7 @@ def FinalizeOptions():
     scons_cache_path = os.environ.get("SCONS_CACHE")
     if scons_cache_path != None:
         CacheDir(scons_cache_path)
+        Decider("MD5")
         print("Scons cache enabled... (path: '" + scons_cache_path + "')")
 
     if env["compiledb"]:
@@ -211,9 +252,10 @@ def FinalizeOptions():
         if scons_ver < (4, 0, 0):
             print("The `compiledb=yes` option requires SCons 4.0 or later, but your version is %s." % scons_raw_version)
             Exit(255)
-
+        
+        # compile_commands.json
         env.Tool("compilation_db")
-        env.Alias("compiledb", env.CompilationDatabase('compile_commands.json'))
+        env.Alias("compiledb", env.CompilationDatabase(normalize_path(env["compiledb_file"], env)))
 
 env.SetupOptions = SetupOptions
 env.FinalizeOptions = FinalizeOptions
