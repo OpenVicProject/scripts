@@ -1,4 +1,4 @@
-# Copied from https://github.com/godotengine/godot-cpp/blob/2bf983e6382f5236948f7740faf130a3568f9dd0/tools/linux.py
+# Copied from https://github.com/godotengine/godot-cpp/blob/df5b1a9a692b0d972f5ac3c853371594cdec420b/tools/linux.py
 from SCons.Variables import *
 from SCons.Tool import clang, clangxx
 
@@ -33,3 +33,5 @@ def generate(env):
     elif env["arch"] == "rv64":
         env.Append(CCFLAGS=["-march=rv64gc"])
         env.Append(LINKFLAGS=["-march=rv64gc"])
+
+    env.Append(CPPDEFINES=["LINUX_ENABLED", "UNIX_ENABLED"])

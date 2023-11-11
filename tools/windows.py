@@ -1,4 +1,4 @@
-# Copied from https://github.com/godotengine/godot-cpp/blob/edf02f83194b58408ca241459c986e32c52fd9c7/tools/windows.py
+# Copied from https://github.com/godotengine/godot-cpp/blob/df5b1a9a692b0d972f5ac3c853371594cdec420b/tools/windows.py
 import sys
 
 import my_spawn
@@ -10,6 +10,7 @@ from SCons.Variables import *
 def options(opts):
     opts.Add(BoolVariable("use_mingw", "Use the MinGW compiler instead of MSVC - only effective on Windows", False))
     opts.Add(BoolVariable("use_clang_cl", "Use the clang driver instead of MSVC - only effective on Windows", False))
+    opts.Add(BoolVariable("use_static_cpp", "Link MinGW/MSVC C++ runtime libraries statically", False))
 
 
 def exists(env):
@@ -31,12 +32,23 @@ def generate(env):
         env.Tool("mslink")
 
         env.Append(CPPDEFINES=["TYPED_METHOD_BIND", "NOMINMAX"])
-        env.Append(CCFLAGS=["/EHsc", "/utf-8", "/Zc:preprocessor"])
+        env.Append(CCFLAGS=["/utf-8", "/Zc:preprocessor"])
         env.Append(LINKFLAGS=["/WX"])
 
         if env["use_clang_cl"]:
             env["CC"] = "clang-cl"
             env["CXX"] = "clang-cl"
+
+        if env["use_static_cpp"]:
+            if env["dev_build"] or env["optimize"] == "debug" or env["optimize"] == "none":
+                env.Append(CCFLAGS=["/MTd"])
+            else:
+                env.Append(CCFLAGS=["/MT"])
+        else:
+            if env["dev_build"] or env["optimize"] == "debug" or env["optimize"] == "none":
+                env.Append(CCFLAGS=["/MDd"])
+            else:
+                env.Append(CCFLAGS=["/MD"])
 
     elif sys.platform == "win32" or sys.platform == "msys":
         env["use_mingw"] = True
@@ -46,6 +58,18 @@ def generate(env):
         env["SHLIBPREFIX"] = ""
         # Want dll suffix
         env["SHLIBSUFFIX"] = ".dll"
+
+        env.Append(CCFLAGS=["-Wwrite-strings"])
+        env.Append(LINKFLAGS=["-Wl,--no-undefined"])
+        if env["use_static_cpp"]:
+            env.Append(
+                LINKFLAGS=[
+                    "-static",
+                    "-static-libgcc",
+                    "-static-libstdc++",
+                ]
+            )
+
         # Long line hack. Use custom spawn, quick AR append (to avoid files with the same names to override each other).
         my_spawn.configure(env)
 
@@ -61,13 +85,15 @@ def generate(env):
         # Want dll suffix
         env["SHLIBSUFFIX"] = ".dll"
 
-        # These options are for a release build even using target=debug
-        env.Append(CCFLAGS=["-O3", "-Wwrite-strings"])
-        env.Append(
-            LINKFLAGS=[
-                "--static",
-                "-Wl,--no-undefined",
-                "-static-libgcc",
-                "-static-libstdc++",
-            ]
-        )
+        env.Append(CCFLAGS=["-Wwrite-strings"])
+        env.Append(LINKFLAGS=["-Wl,--no-undefined"])
+        if env["use_static_cpp"]:
+            env.Append(
+                LINKFLAGS=[
+                    "-static",
+                    "-static-libgcc",
+                    "-static-libstdc++",
+                ]
+            )
+
+    env.Append(CPPDEFINES=["WINDOWS_ENABLED"])
