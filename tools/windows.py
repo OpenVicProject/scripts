@@ -19,7 +19,15 @@ def exists(env):
 
 def generate(env):
     base = None
-    if not env["use_mingw"] and msvc.exists(env):
+
+    msvc_found = msvc.exists(env)
+    mingw_found = mingw.exists(env)
+
+    if not msvc_found or not mingw_found:
+        print("Could not find installation of msvc or mingw, please properly install (or reinstall) MSVC with C++ or Mingw first.")
+        env.Exit(1)
+
+    if not env["use_mingw"] and msvc_found:
         if env["arch"] == "x86_64":
             env["TARGET_ARCH"] = "amd64"
         elif env["arch"] == "x86_32":
@@ -50,7 +58,7 @@ def generate(env):
             else:
                 env.Append(CCFLAGS=["/MD"])
 
-    elif sys.platform == "win32" or sys.platform == "msys":
+    elif (sys.platform == "win32" or sys.platform == "msys") and mingw_found:
         env["use_mingw"] = True
         mingw.generate(env)
         # Don't want lib prefixes
@@ -73,7 +81,7 @@ def generate(env):
         # Long line hack. Use custom spawn, quick AR append (to avoid files with the same names to override each other).
         my_spawn.configure(env)
 
-    else:
+    elif mingw_found:
         env["use_mingw"] = True
         # Cross-compilation using MinGW
         prefix = "i686" if env["arch"] == "x86_32" else env["arch"]
@@ -95,5 +103,9 @@ def generate(env):
                     "-static-libstdc++",
                 ]
             )
+
+    else:
+        print("'use_mingw' set but Mingw is not installed, please install Mingw first.")
+        env.Exit(1)
 
     env.Append(CPPDEFINES=["WINDOWS_ENABLED"])
