@@ -23,7 +23,7 @@ def generate(env):
     msvc_found = msvc.exists(env)
     mingw_found = mingw.exists(env)
 
-    if not msvc_found or not mingw_found:
+    if not msvc_found and not mingw_found:
         print("Could not find installation of msvc or mingw, please properly install (or reinstall) MSVC with C++ or Mingw first.")
         env.Exit(1)
 
