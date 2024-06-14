@@ -1,6 +1,7 @@
 # Copied from https://github.com/godotengine/godot-cpp/blob/df5b1a9a692b0d972f5ac3c853371594cdec420b/tools/macos.py
 import os
 import sys
+from SCons.Variables import *
 
 
 def has_osxcross():
@@ -12,6 +13,9 @@ def options(opts):
     opts.Add("macos_sdk_path", "macOS SDK path", "")
     if has_osxcross():
         opts.Add("osxcross_sdk", "OSXCross SDK version", "darwin16")
+    opts.Add(BoolVariable("use_ubsan", "Use LLVM/GCC compiler undefined behavior sanitizer (UBSAN)", False))
+    opts.Add(BoolVariable("use_asan", "Use LLVM/GCC compiler address sanitizer (ASAN)", False))
+    opts.Add(BoolVariable("use_tsan", "Use LLVM/GCC compiler thread sanitizer (TSAN)", False))
 
 
 def exists(env):
@@ -69,5 +73,26 @@ def generate(env):
             "-Wl,-undefined,dynamic_lookup",
         ]
     )
+
+    if env["use_ubsan"] or env["use_asan"] or env["use_tsan"]:
+        env.extra_suffix += ".san"
+        env.Append(CCFLAGS=["-DSANITIZERS_ENABLED"])
+
+        if env["use_ubsan"]:
+            env.Append(
+                CCFLAGS=[
+                    "-fsanitize=undefined,shift,shift-exponent,integer-divide-by-zero,unreachable,vla-bound,null,return,signed-integer-overflow,bounds,float-divide-by-zero,float-cast-overflow,nonnull-attribute,returns-nonnull-attribute,bool,enum,vptr,pointer-overflow,builtin"
+                ]
+            )
+            env.Append(LINKFLAGS=["-fsanitize=undefined"])
+            env.Append(CCFLAGS=["-fsanitize=nullability-return,nullability-arg,function,nullability-assign"])
+
+        if env["use_asan"]:
+            env.Append(CCFLAGS=["-fsanitize=address,pointer-subtract,pointer-compare"])
+            env.Append(LINKFLAGS=["-fsanitize=address"])
+
+        if env["use_tsan"]:
+            env.Append(CCFLAGS=["-fsanitize=thread"])
+            env.Append(LINKFLAGS=["-fsanitize=thread"])
 
     env.Append(CPPDEFINES=["MACOS_ENABLED", "UNIX_ENABLED"])
