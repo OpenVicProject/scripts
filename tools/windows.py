@@ -11,6 +11,7 @@ def options(opts):
     opts.Add(BoolVariable("use_mingw", "Use the MinGW compiler instead of MSVC - only effective on Windows", False))
     opts.Add(BoolVariable("use_clang_cl", "Use the clang driver instead of MSVC - only effective on Windows", False))
     opts.Add(BoolVariable("use_static_cpp", "Link MinGW/MSVC C++ runtime libraries statically", False))
+    opts.Add(BoolVariable("use_asan", "Use address sanitizer (ASAN)", False))
 
 
 def exists(env):
@@ -107,5 +108,10 @@ def generate(env):
     else:
         print("'use_mingw' set but Mingw is not installed, please install Mingw first.")
         env.Exit(1)
+
+    if env["use_asan"]:
+        env.extra_suffix += ".san"
+        env.Append(LINKFLAGS=["/INFERASANLIBS"])
+        env.Append(CCFLAGS=["/fsanitize=address"])
 
     env.Append(CPPDEFINES=["WINDOWS_ENABLED"])

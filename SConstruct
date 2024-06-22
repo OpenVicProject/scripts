@@ -180,6 +180,8 @@ def FinalizeOptions():
     opts.Finalize(env)
     Help(opts.GenerateHelpText(env))
 
+    env.extra_suffix = ""
+
     if env["platform"] in unsupported_known_platforms:
         print("Unsupported platform: " + env["platform"]+". Only supports " + ", ".join(set(platforms) - set(unsupported_known_platforms)))
         Exit()
