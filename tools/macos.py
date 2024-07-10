@@ -1,7 +1,7 @@
 # Copied from https://github.com/godotengine/godot-cpp/blob/df5b1a9a692b0d972f5ac3c853371594cdec420b/tools/macos.py
 import os
 import sys
-from SCons.Variables import *
+from SCons.Variables import BoolVariable
 
 
 def has_osxcross():
