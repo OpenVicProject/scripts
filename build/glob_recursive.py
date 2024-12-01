@@ -19,6 +19,6 @@ def GlobRecursive(pattern, nodes=['.'], exclude=None):
         if isinstance(exclude, list):
             for val in results:
                 for pat in exclude:
-                    if not fnmatch.fnmatch(str(val), pat):
+                    if fnmatch.fnmatch(str(val), pat):
                         results.remove(val)
     return results
