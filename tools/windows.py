@@ -11,6 +11,7 @@ def options(opts):
     opts.Add(BoolVariable("use_mingw", "Use the MinGW compiler instead of MSVC - only effective on Windows", False))
     opts.Add(BoolVariable("use_clang_cl", "Use the clang driver instead of MSVC - only effective on Windows", False))
     opts.Add(BoolVariable("use_static_cpp", "Link MinGW/MSVC C++ runtime libraries statically", False))
+    opts.Add(BoolVariable("debug_crt", "Compile with MSVC's debug CRT (/MDd)", False))
     opts.Add(BoolVariable("use_asan", "Use address sanitizer (ASAN)", False))
 
 
@@ -48,14 +49,12 @@ def generate(env):
             env["CC"] = "clang-cl"
             env["CXX"] = "clang-cl"
 
-        if env["use_static_cpp"]:
-            if env["dev_build"] or env["optimize"] == "debug" or env["optimize"] == "none":
-                env.Append(CCFLAGS=["/MTd"])
-            else:
-                env.Append(CCFLAGS=["/MT"])
+        if env["debug_crt"]:
+            # Always use dynamic runtime, static debug CRT breaks thread_local.
+            env.AppendUnique(CCFLAGS=["/MDd"])
         else:
-            if env["dev_build"] or env["optimize"] == "debug" or env["optimize"] == "none":
-                env.Append(CCFLAGS=["/MDd"])
+            if env["use_static_cpp"]:
+                env.Append(CCFLAGS=["/MT"])
             else:
                 env.Append(CCFLAGS=["/MD"])
 
