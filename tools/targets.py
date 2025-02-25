@@ -48,6 +48,14 @@ def options(opts):
             ("none", "custom", "debug", "speed", "speed_trace", "size"),
         )
     )
+    opts.Add(
+        EnumVariable(
+            "lto",
+            "Link-time optimization",
+            "none",
+            ("none", "auto", "thin", "full"),
+        )
+    )
     opts.Add(BoolVariable("debug_symbols", "Build with debugging symbols", True))
     opts.Add(BoolVariable("dev_build", "Developer build with dev-only debugging code (DEV_ENABLED)", False))
 
@@ -66,6 +74,7 @@ def generate(env):
 
     # Keep this configuration in sync with SConstruct in upstream Godot.
 
+    env.use_hot_reload = env.get("use_hot_reload", env["target"] != "template_release")
     env.editor_build = env["target"] == "editor"
     env.dev_build = env["dev_build"]
     env.debug_features = env["target"] in ["editor", "template_debug"]
@@ -79,6 +88,9 @@ def generate(env):
 
     env["optimize"] = ARGUMENTS.get("optimize", opt_level)
     env["debug_symbols"] = get_cmdline_bool("debug_symbols", env.dev_build)
+
+    if env.use_hot_reload:
+        env.Append(CPPDEFINES=["HOT_RELOAD_ENABLED"])
 
     if env.editor_build:
         env.Append(CPPDEFINES=["TOOLS_ENABLED"])
@@ -97,49 +109,3 @@ def generate(env):
     else:
         # Disable assert() for production targets (only used in thirdparty code).
         env.Append(CPPDEFINES=["NDEBUG"])
-
-    # Set optimize and debug_symbols flags.
-    # "custom" means do nothing and let users set their own optimization flags.
-    if env.get("is_msvc", False):
-        if env["debug_symbols"]:
-            env.Append(CCFLAGS=["/Zi", "/FS"])
-            env.Append(LINKFLAGS=["/DEBUG:FULL"])
-
-        if env["optimize"] == "speed":
-            env.Append(CCFLAGS=["/O2"])
-            env.Append(LINKFLAGS=["/OPT:REF"])
-        elif env["optimize"] == "speed_trace":
-            env.Append(CCFLAGS=["/O2"])
-            env.Append(LINKFLAGS=["/OPT:REF", "/OPT:NOICF"])
-        elif env["optimize"] == "size":
-            env.Append(CCFLAGS=["/O1"])
-            env.Append(LINKFLAGS=["/OPT:REF"])
-        elif env["optimize"] == "debug" or env["optimize"] == "none":
-            env.Append(CCFLAGS=["/Od"])
-    else:
-        if env["debug_symbols"]:
-            # Adding dwarf-4 explicitly makes stacktraces work with clang builds,
-            # otherwise addr2line doesn't understand them.
-            env.Append(CCFLAGS=["-gdwarf-4"])
-            if env.dev_build:
-                env.Append(CCFLAGS=["-g3"])
-            else:
-                env.Append(CCFLAGS=["-g2"])
-        else:
-            if using_clang(env) and not is_vanilla_clang(env):
-                # Apple Clang, its linker doesn't like -s.
-                env.Append(LINKFLAGS=["-Wl,-S", "-Wl,-x", "-Wl,-dead_strip"])
-            else:
-                env.Append(LINKFLAGS=["-s"])
-
-        if env["optimize"] == "speed":
-            env.Append(CCFLAGS=["-O3"])
-        # `-O2` is friendlier to debuggers than `-O3`, leading to better crash backtraces.
-        elif env["optimize"] == "speed_trace":
-            env.Append(CCFLAGS=["-O2"])
-        elif env["optimize"] == "size":
-            env.Append(CCFLAGS=["-Os"])
-        elif env["optimize"] == "debug":
-            env.Append(CCFLAGS=["-Og"])
-        elif env["optimize"] == "none":
-            env.Append(CCFLAGS=["-O0"])

@@ -1,6 +1,8 @@
-# Copied from https://github.com/godotengine/godot-cpp/blob/df5b1a9a692b0d972f5ac3c853371594cdec420b/tools/macos.py
+# Based on https://github.com/godotengine/godot-cpp/blob/98ea2f60bb3846d6ae410d8936137d1b099cd50b/tools/macos.py
 import os
 import sys
+
+import common_compiler_flags
 from SCons.Variables import BoolVariable
 
 
@@ -96,3 +98,8 @@ def generate(env):
             env.Append(LINKFLAGS=["-fsanitize=thread"])
 
     env.Append(CPPDEFINES=["MACOS_ENABLED", "UNIX_ENABLED"])
+
+    if env["lto"] == "auto":
+        env["lto"] = "none"
+
+    common_compiler_flags.generate(env)
