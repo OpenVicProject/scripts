@@ -23,7 +23,11 @@ def exists(env):
 
 
 def generate(env):
-    assert env["lto"] in ["thin", "full", "none"], "Unrecognized lto: {}".format(env["lto"])
+    if "lto" in env:
+        assert env["lto"] in ["thin", "full", "none"], "Unrecognized lto: {}".format(env["lto"])
+    else:
+        env["lto"] = "none"
+
     if env["lto"] != "none":
         print("Using LTO: " + env["lto"])
 
