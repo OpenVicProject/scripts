@@ -1,4 +1,5 @@
-# Copied from https://github.com/godotengine/godot-cpp/blob/df5b1a9a692b0d972f5ac3c853371594cdec420b/tools/linux.py
+# Based on https://github.com/godotengine/godot-cpp/blob/98ea2f60bb3846d6ae410d8936137d1b099cd50b/tools/linux.py
+import common_compiler_flags
 from SCons.Variables import BoolVariable
 from SCons.Tool import clang, clangxx
 
@@ -20,6 +21,9 @@ def generate(env):
     if env["use_llvm"]:
         clang.generate(env)
         clangxx.generate(env)
+    elif env.use_hot_reload:
+        # Required for hot reload support.
+        env.Append(CXXFLAGS=["-fno-gnu-unique"])
 
     env.Append(CCFLAGS=["-fPIC", "-Wwrite-strings"])
     env.Append(LINKFLAGS=["-Wl,-R,'$$ORIGIN'"])
@@ -78,3 +82,8 @@ def generate(env):
             env.Append(LINKFLAGS=["-fsanitize=memory"])
 
     env.Append(CPPDEFINES=["LINUX_ENABLED", "UNIX_ENABLED"])
+
+    if env["lto"] == "auto":
+        env["lto"] = "full"
+
+    common_compiler_flags.generate(env)

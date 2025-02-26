@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# This file is heavily based on https://github.com/godotengine/godot-cpp/blob/df5b1a9a692b0d972f5ac3c853371594cdec420b/SConstruct and https://github.com/godotengine/godot-cpp/blob/df5b1a9a692b0d972f5ac3c853371594cdec420b/tools/godotcpp.py
+# This file is heavily based on https://github.com/godotengine/godot-cpp/blob/df5b1a9a692b0d972f5ac3c853371594cdec420b/SConstruct and https://github.com/godotengine/godot-cpp/blob/98ea2f60bb3846d6ae410d8936137d1b099cd50b/tools/godotcpp.py
 import os
 import platform
 import sys
@@ -50,7 +50,19 @@ env.show_progress = show_progress
 
 env.PrependENVPath("PATH", os.getenv("PATH"))
 
-architecture_array = ["", "universal", "x86_32", "x86_64", "arm32", "arm64", "rv64", "ppc32", "ppc64", "wasm32"]
+# CPU architecture options.
+architecture_array = [
+    "",
+    "universal",
+    "x86_32",
+    "x86_64",
+    "arm32",
+    "arm64",
+    "rv64",
+    "ppc32",
+    "ppc64",
+    "wasm32",
+]
 architecture_aliases = {
     "x64": "x86_64",
     "amd64": "x86_64",
@@ -66,8 +78,8 @@ architecture_aliases = {
     "ppc64le": "ppc64",
 }
 
-platforms = ("linux", "macos", "windows", "android", "ios", "javascript")
-unsupported_known_platforms = ("android", "ios", "javascript")
+platforms = ("linux", "macos", "windows", "android", "ios", "web")
+unsupported_known_platforms = ("android", "ios", "web")
 
 def SetupOptions():
     # Default num_jobs to local cpu count if not user specified.
@@ -120,9 +132,26 @@ def SetupOptions():
 
     opts.Add(
         BoolVariable(
+            key="use_hot_reload",
+            help="Enable the extra accounting required to support hot reload.",
+            default=env.get("use_hot_reload", None),
+        )
+    )
+
+    opts.Add(
+        BoolVariable(
             "disable_exceptions",
             "Force disabling exception handling code",
             default=env.get("disable_exceptions", True),
+        )
+    )
+
+    opts.Add(
+        EnumVariable(
+            key="symbols_visibility",
+            help="Symbols visibility on GNU platforms. Use 'auto' to apply the default value.",
+            default=env.get("symbols_visibility", "hidden"),
+            allowed_values=["auto", "visible", "hidden"],
         )
     )
 
@@ -186,7 +215,7 @@ def FinalizeOptions():
         print("Unsupported platform: " + env["platform"]+". Only supports " + ", ".join(set(platforms) - set(unsupported_known_platforms)))
         Exit()
 
-    # Process CPU architecture argument.
+    #  Process CPU architecture argument.
     if env["arch"] == "":
         # No architecture specified. Default to arm64 if building for Android,
         # universal if building for macOS or iOS, wasm32 if building for web,
@@ -195,7 +224,7 @@ def FinalizeOptions():
             env["arch"] = "universal"
         elif env["platform"] == "android":
             env["arch"] = "arm64"
-        elif env["platform"] == "javascript":
+        elif env["platform"] == "web":
             env["arch"] = "wasm32"
         else:
             host_machine = platform.machine().lower()
@@ -208,7 +237,7 @@ def FinalizeOptions():
                 env["arch"] = "x86_32"
             else:
                 print("Unsupported CPU architecture: " + host_machine)
-                Exit()
+                env.Exit(1)
 
     print("Building for architecture " + env["arch"] + " on platform " + env["platform"])
 
@@ -217,27 +246,8 @@ def FinalizeOptions():
     if tool is None or not tool.exists(env):
         raise ValueError("Required toolchain not found for platform " + env["platform"])
 
-    tool.generate(env)
     target_tool.generate(env)
-
-    # Disable exception handling. Godot doesn't use exceptions anywhere, and this
-    # saves around 20% of binary size and very significant build time.
-    if env["disable_exceptions"]:
-        if env.get("is_msvc", False):
-            env.Append(CPPDEFINES=[("_HAS_EXCEPTIONS", 0)])
-        else:
-            env.Append(CXXFLAGS=["-fno-exceptions"])
-    elif env.get("is_msvc", False):
-        env.Append(CXXFLAGS=["/EHsc"])
-
-    # Require C++20
-    if env.get("is_msvc", False):
-        env.Append(CXXFLAGS=["/std:c++20"])
-    else:
-        env.Append(CXXFLAGS=["-std=c++20"])
-
-    if env["precision"] == "double":
-        env.Append(CPPDEFINES=["REAL_T_IS_DOUBLE"])
+    tool.generate(env)
 
     scons_cache_path = os.environ.get("SCONS_CACHE")
     if scons_cache_path != None:
