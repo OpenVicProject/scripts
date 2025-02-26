@@ -147,6 +147,14 @@ def SetupOptions():
     )
 
     opts.Add(
+        BoolVariable(
+            "disable_rtti",
+            "Disabling of runtime type information",
+            default=env.get("disable_rtti", True)
+        )
+    )
+
+    opts.Add(
         EnumVariable(
             key="symbols_visibility",
             help="Symbols visibility on GNU platforms. Use 'auto' to apply the default value.",

@@ -61,6 +61,9 @@ def generate(env):
             env.Append(CCFLAGS=["/Zi", "/FS"])
             env.Append(LINKFLAGS=["/DEBUG:FULL"])
 
+        if env["disable_rtti"]:
+            env.Append(CCFLAGS=["/GR-"])
+
         if env["optimize"] == "speed":
             env.Append(CCFLAGS=["/O2"])
             env.Append(LINKFLAGS=["/OPT:REF"])
@@ -103,6 +106,9 @@ def generate(env):
                 env.Append(LINKFLAGS=["-Wl,-S", "-Wl,-x", "-Wl,-dead_strip"])
             else:
                 env.Append(LINKFLAGS=["-s"])
+
+        if env["disable_rtti"]:
+            env.Append(CCFLAGS=["-fno-rtti"])
 
         if env["optimize"] == "speed":
             env.Append(CCFLAGS=["-O3"])
