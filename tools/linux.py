@@ -1,5 +1,5 @@
 # Based on https://github.com/godotengine/godot-cpp/blob/98ea2f60bb3846d6ae410d8936137d1b099cd50b/tools/linux.py
-import common_compiler_flags
+from build import common_compiler_flags
 from SCons.Variables import BoolVariable
 from SCons.Tool import clang, clangxx
 
