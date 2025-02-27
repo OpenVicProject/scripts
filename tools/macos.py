@@ -2,7 +2,7 @@
 import os
 import sys
 
-import common_compiler_flags
+from build import common_compiler_flags
 from SCons.Variables import BoolVariable
 
 
