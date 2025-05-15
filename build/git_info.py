@@ -4,6 +4,7 @@ from pathlib import Path
 
 base_folder = Path(__file__).resolve().parent
 
+
 def get_git_tag():
     git_tag = os.getenv("OPENVIC_TAG", "<tag missing>")
     if os.path.exists(".git"):
@@ -14,14 +15,17 @@ def get_git_tag():
         except (subprocess.CalledProcessError, OSError):
             # `git` not found in PATH.
             pass
-    
+
     return git_tag
+
 
 def get_git_release():
     git_release = os.getenv("OPENVIC_RELEASE", "<release missing>")
     if os.path.exists(".git"):
         try:
-            result = subprocess.check_output(["gh", "release", "list", "--json", "name", "-q", ".[0] | .name"], encoding="utf-8").strip()
+            result = subprocess.check_output(
+                ["gh", "release", "list", "--json", "name", "-q", ".[0] | .name"], encoding="utf-8"
+            ).strip()
             if result != "":
                 git_release = result
         except (subprocess.CalledProcessError, OSError):
@@ -29,8 +33,9 @@ def get_git_release():
             git_tag = get_git_tag()
             if git_tag != "<tag missing>":
                 git_release = git_tag
-    
+
     return git_release
+
 
 def get_git_hash():
     # Parse Git hash if we're in a Git repo.
@@ -86,5 +91,6 @@ def get_git_hash():
         "git_timestamp": git_timestamp,
     }
 
+
 def get_git_info():
-    return {**get_git_hash(), "git_tag": get_git_tag(), "git_release": get_git_release() }
+    return {**get_git_hash(), "git_tag": get_git_tag(), "git_release": get_git_release()}

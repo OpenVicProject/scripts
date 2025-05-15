@@ -1,0 +1,14 @@
+name: ️✅ Validate
+
+on: [push, pull_request, merge_group]
+
+jobs:
+  static-checks:
+    name: Code style and file formatting
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4.1.1
+
+      - name: Style checks via pre-commit
+        uses: pre-commit/action@v3.0.1

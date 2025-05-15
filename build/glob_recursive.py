@@ -1,7 +1,8 @@
-def GlobRecursive(pattern, nodes=['.'], exclude=None):
-    import SCons
-    import glob
+def GlobRecursive(pattern, nodes=["."], exclude=None):
     import fnmatch
+
+    import SCons
+
     fs = SCons.Node.FS.get_default_fs()
     Glob = fs.Glob
 
@@ -11,11 +12,11 @@ def GlobRecursive(pattern, nodes=['.'], exclude=None):
     results = []
     for node in nodes:
         nnodes = []
-        for f in Glob(str(node) + '/*', source=True):
+        for f in Glob(str(node) + "/*", source=True):
             if type(f) is SCons.Node.FS.Dir:
                 nnodes.append(f)
         results += GlobRecursive(pattern, nnodes)
-        results += Glob(str(node) + '/' + pattern, source=True)
+        results += Glob(str(node) + "/" + pattern, source=True)
         if isinstance(exclude, list):
             for val in results:
                 for pat in exclude:
