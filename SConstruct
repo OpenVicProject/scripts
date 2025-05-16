@@ -10,6 +10,7 @@ import SCons
 # Local
 from build.option_handler import OptionsClass
 from build.glob_recursive import GlobRecursive
+from build.git_info import get_git_info
 from build.cache import show_progress
 
 def normalize_path(val, env):
@@ -271,5 +272,6 @@ def FinalizeOptions():
 env.SetupOptions = SetupOptions
 env.FinalizeOptions = FinalizeOptions
 env.GlobRecursive = GlobRecursive
+env.get_git_info = get_git_info
 
 Return("env")
