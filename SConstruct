@@ -13,6 +13,7 @@ from build.option_handler import OptionsClass
 from build.glob_recursive import GlobRecursive
 from build.git_info import get_git_info, git_builder
 from build.license_info import license_builder
+from build.author_info import author_builder
 from build.cache import show_progress
 
 def normalize_path(val, env):
@@ -277,6 +278,8 @@ env.GlobRecursive = GlobRecursive
 env.get_git_info = get_git_info
 env.license_builder = license_builder
 env.git_builder = git_builder
+env.author_builder = author_builder
+
 
 def to_raw_cstring(value: Union[str, List[str]]) -> str:
     MAX_LITERAL = 35 * 1024
