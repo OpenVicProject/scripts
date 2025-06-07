@@ -11,7 +11,7 @@ import SCons
 # Local
 from build.option_handler import OptionsClass
 from build.glob_recursive import GlobRecursive
-from build.git_info import get_git_info
+from build.git_info import get_git_info, git_builder
 from build.license_info import license_builder
 from build.cache import show_progress
 
@@ -276,6 +276,7 @@ env.FinalizeOptions = FinalizeOptions
 env.GlobRecursive = GlobRecursive
 env.get_git_info = get_git_info
 env.license_builder = license_builder
+env.git_builder = git_builder
 
 def to_raw_cstring(value: Union[str, List[str]]) -> str:
     MAX_LITERAL = 35 * 1024

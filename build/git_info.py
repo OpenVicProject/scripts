@@ -1,8 +1,5 @@
 import os
 import subprocess
-from pathlib import Path
-
-base_folder = Path(__file__).resolve().parent
 
 
 def get_git_tag():
@@ -94,3 +91,28 @@ def get_git_hash():
 
 def get_git_info():
     return {**get_git_hash(), "git_tag": get_git_tag(), "git_release": get_git_release()}
+
+
+def git_builder(target, source, env):
+    name_prefix = env.get("name_prefix", "project")
+    prefix_upper = name_prefix.upper()
+
+    git_info = source[0].read()
+
+    with open(str(target[0]), "wt", encoding="utf-8", newline="\n") as file:
+        file.write("/* THIS FILE IS GENERATED. EDITS WILL BE LOST. */\n\n")
+        file.write(
+            f"""\
+#pragma once
+
+#include <cstdint>
+#include <string_view>
+
+namespace OpenVic {{
+	static constexpr std::string_view {prefix_upper}_TAG = "{git_info["git_tag"]}";
+	static constexpr std::string_view {prefix_upper}_RELEASE = "{git_info["git_release"]}";
+	static constexpr std::string_view {prefix_upper}_COMMIT_HASH = "{git_info["git_hash"]}";
+	static constexpr const uint64_t {prefix_upper}_COMMIT_TIMESTAMP = {git_info["git_timestamp"]}ull;
+}}
+"""
+        )
