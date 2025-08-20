@@ -282,7 +282,7 @@ env.author_builder = author_builder
 
 
 def to_raw_cstring(value: Union[str, List[str]]) -> str:
-    MAX_LITERAL = 35 * 1024
+    MAX_LITERAL = 16380
 
     if isinstance(value, list):
         value = "\n".join(value) + "\n"
