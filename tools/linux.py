@@ -1,4 +1,4 @@
-# Based on https://github.com/godotengine/godot-cpp/blob/98ea2f60bb3846d6ae410d8936137d1b099cd50b/tools/linux.py
+# Based on https://github.com/godotengine/godot-cpp/blob/e83fd0904c13356ed1d4c3d09f8bb9132bdc6b77/tools/linux.py
 from build import common_compiler_flags
 from SCons.Variables import BoolVariable
 from SCons.Tool import clang, clangxx
@@ -6,6 +6,7 @@ from SCons.Tool import clang, clangxx
 
 def options(opts):
     opts.Add(BoolVariable("use_llvm", "Use the LLVM compiler - only effective when targeting Linux", False))
+    opts.Add(BoolVariable("use_static_cpp", "Link libgcc and libstdc++ statically for better portability", True))
     opts.Add(BoolVariable("use_ubsan", "Use LLVM/GCC compiler undefined behavior sanitizer (UBSAN)", False))
     opts.Add(BoolVariable("use_asan", "Use LLVM/GCC compiler address sanitizer (ASAN)", False))
     opts.Add(BoolVariable("use_lsan", "Use LLVM/GCC compiler leak sanitizer (LSAN)", False))
@@ -42,6 +43,10 @@ def generate(env):
     elif env["arch"] == "rv64":
         env.Append(CCFLAGS=["-march=rv64gc"])
         env.Append(LINKFLAGS=["-march=rv64gc"])
+
+    # Link statically for portability
+    if env["use_static_cpp"]:
+        env.Append(LINKFLAGS=["-static-libgcc", "-static-libstdc++"])
 
     if env["use_ubsan"] or env["use_asan"] or env["use_lsan"] or env["use_tsan"] or env["use_msan"]:
         env.extra_suffix += ".san"
