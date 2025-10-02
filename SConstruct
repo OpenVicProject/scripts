@@ -48,7 +48,7 @@ except:
     env = Environment(tools=["default"], PLATFORM="")
     old_env = env
 
-env.TOOLPATH = [env.Dir("../").rel_path(env.Dir("tools"))]
+env.TOOLPATH = [env.Dir("tools").abspath]
 env.is_standalone = is_standalone
 env.show_progress = show_progress
 
