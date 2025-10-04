@@ -1,4 +1,4 @@
-# Based on https://github.com/godotengine/godot-cpp/blob/e83fd0904c13356ed1d4c3d09f8bb9132bdc6b77/tools/macos.py
+# Based on https://github.com/godotengine/godot-cpp/blob/98ea2f60bb3846d6ae410d8936137d1b099cd50b/tools/macos.py
 import os
 import sys
 
@@ -67,6 +67,14 @@ def generate(env):
     if env["macos_sdk_path"]:
         env.Append(CCFLAGS=["-isysroot", env["macos_sdk_path"]])
         env.Append(LINKFLAGS=["-isysroot", env["macos_sdk_path"]])
+
+    env.Append(
+        LINKFLAGS=[
+            "-framework",
+            "Foundation",
+            "-Wl,-undefined,dynamic_lookup",
+        ]
+    )
 
     if env["use_ubsan"] or env["use_asan"] or env["use_tsan"]:
         env.extra_suffix += ".san"
