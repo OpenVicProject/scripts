@@ -71,7 +71,7 @@ def generate(env):
     env.Append(
         LINKFLAGS=[
             "-framework",
-            "Cocoa",
+            "Foundation",
             "-Wl,-undefined,dynamic_lookup",
         ]
     )
