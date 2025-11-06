@@ -54,6 +54,15 @@ def generate(env):
             env.Append(CCFLAGS=["-fvisibility=hidden"])
             env.Append(LINKFLAGS=["-fvisibility=hidden"])
 
+    if env["optimize"] == "speed":
+        env.Append(CPPDEFINES=["OPT_SPEED_ENABLED"])
+    elif env["optimize"] == "speed_trace":
+        env.Append(CPPDEFINES=["OPT_SPEED_TRACE_ENABLED"])
+    elif env["optimize"] == "size":
+        env.Append(CPPDEFINES=["OPT_SIZE_ENABLED"])
+    elif env["optimize"] == "debug":
+        env.Append(CPPDEFINES=["OPT_DEBUG_ENABLED"])
+
     # Set optimize and debug_symbols flags.
     # "custom" means do nothing and let users set their own optimization flags.
     if env.get("is_msvc", False):
