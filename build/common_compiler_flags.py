@@ -63,6 +63,9 @@ def generate(env):
     elif env["optimize"] == "debug":
         env.Append(CPPDEFINES=["OPT_DEBUG_ENABLED"])
 
+    if env["harden_memory"] == "fast":
+        env.Append(CPPDEFINES=["_GLIBCXX_ASSERTIONS", ("_LIBCPP_HARDENING_MODE", "_LIBCPP_HARDENING_MODE_FAST"), ("_MSVC_STL_HARDENING", 1)])
+
     # Set optimize and debug_symbols flags.
     # "custom" means do nothing and let users set their own optimization flags.
     if env.get("is_msvc", False):
