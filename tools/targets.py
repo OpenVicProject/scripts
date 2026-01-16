@@ -59,6 +59,14 @@ def options(opts):
     )
     opts.Add(BoolVariable("debug_symbols", "Build with debugging symbols", True))
     opts.Add(BoolVariable("dev_build", "Developer build with dev-only debugging code (DEV_ENABLED)", False))
+    opts.Add(EnumVariable(
+            "harden_memory",
+            "Library memory hardening (by default inferred from 'dev_build')",
+            "auto",
+            ["auto", "none", "fast"],
+            ignorecase=2
+        )
+    )
 
 
 def exists(env):
@@ -88,6 +96,13 @@ def generate(env):
         else:  # Release
             opt_level = "speed"
         env["optimize"] = ARGUMENTS.get("optimize", opt_level)
+
+    if env["harden_memory"] == "auto":
+        if env.dev_build:
+            harden_level = "none"
+        else:
+            harden_level = "fast"
+        env["harden_memory"] = ARGUMENTS.get("harden_memory", harden_level)
 
     env["debug_symbols"] = get_cmdline_bool("debug_symbols", env.dev_build)
 
