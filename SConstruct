@@ -8,6 +8,10 @@ from typing import List, Union
 
 import SCons
 
+_SCRIPTS_DIR = Dir(".").abspath
+if _SCRIPTS_DIR not in sys.path:
+    sys.path.insert(0, _SCRIPTS_DIR)
+
 # Local
 from build.option_handler import OptionsClass
 from build.glob_recursive import GlobRecursive
@@ -15,6 +19,7 @@ from build.git_info import get_git_info, git_builder
 from build.license_info import license_builder
 from build.author_info import author_builder
 from build.cache import show_progress
+from build.pch import setup_pch
 
 def normalize_path(val, env):
     return val if os.path.isabs(val) else os.path.join(env.Dir("#").abspath, val)
@@ -167,9 +172,14 @@ def SetupOptions():
         )
     )
 
-    # Add platform options
+    # Add platform options. Iterate deterministically with the current platform
+    # registered last so its defaults win 
     tools = {}
-    for pl in set(platforms) - set(unsupported_known_platforms):
+    current_platform = env.get("platform", default_platform)
+    supported = sorted(set(platforms) - set(unsupported_known_platforms))
+    if current_platform in supported:
+        supported = [pl for pl in supported if pl != current_platform] + [current_platform]
+    for pl in supported:
         tool = Tool(pl, toolpath=env.TOOLPATH)
         if hasattr(tool, "options"):
             tool.options(opts)
@@ -205,6 +215,7 @@ def SetupOptions():
     opts.Add(BoolVariable("verbose", "Enable verbose output for the compilation", False))
     opts.Add(BoolVariable("intermediate_delete", "Enables automatically deleting unassociated intermediate binary files.", True))
     opts.Add(BoolVariable("progress", "Show a progress indicator during compilation", True))
+    opts.Add(BoolVariable("use_pch", "Enable precompiled headers when the toolchain supports it", True))
 
     # Targets flags tool (optimizations, debug symbols)
     target_tool = Tool("targets", toolpath=env.TOOLPATH)
@@ -261,10 +272,11 @@ def FinalizeOptions():
     target_tool.generate(env)
     tool.generate(env)
 
+    Decider("MD5-timestamp")
+
     scons_cache_path = os.environ.get("SCONS_CACHE")
     if scons_cache_path != None:
         CacheDir(scons_cache_path)
-        Decider("MD5")
         print("Scons cache enabled... (path: '" + scons_cache_path + "')")
 
     if env["compiledb"] and is_standalone:
@@ -279,6 +291,7 @@ env.get_git_info = get_git_info
 env.license_builder = license_builder
 env.git_builder = git_builder
 env.author_builder = author_builder
+env.SetupPCH = lambda header, source: setup_pch(env, header, source)
 
 
 def to_raw_cstring(value: Union[str, List[str]]) -> str:
