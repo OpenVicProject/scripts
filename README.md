@@ -11,3 +11,4 @@ Common Scons scripts repo for the [OpenVicProject repos](https://github.com/Open
     opts.Add(BoolVariable("example", "Is an example", false))
     ```
 2. When options are finished call `env.FinalizeOptions()` then setup your scons script using env.
+test
