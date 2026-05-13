@@ -14,7 +14,7 @@ if _SCRIPTS_DIR not in sys.path:
 
 # Local
 from build.option_handler import OptionsClass
-from build.glob_recursive import GlobRecursive
+from build.glob_recursive import GlobRecursive, GlobRecursiveVariant
 from build.git_info import get_git_info, git_builder
 from build.license_info import license_builder
 from build.author_info import author_builder
@@ -287,6 +287,7 @@ def FinalizeOptions():
 env.SetupOptions = SetupOptions
 env.FinalizeOptions = FinalizeOptions
 env.GlobRecursive = GlobRecursive
+env.GlobRecursiveVariant = lambda pattern, src, variant, exclude=None: GlobRecursiveVariant(env, pattern, src, variant, exclude)
 env.get_git_info = get_git_info
 env.license_builder = license_builder
 env.git_builder = git_builder
