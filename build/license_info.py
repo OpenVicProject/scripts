@@ -1,6 +1,8 @@
 from collections import OrderedDict
 from io import TextIOWrapper
 
+import build.string
+
 
 def get_license_info(src_copyright):
     class LicenseReader:
@@ -95,7 +97,7 @@ def license_builder(target, source, env):
             part_indexes[project_name] = part_index
             for part in project:
                 result += (
-                    f'\t\t{{ "{env.to_escaped_cstring(part["License"][0])}", '
+                    f'\t\t{{ "{build.string.to_escaped_cstring(part["License"][0])}", '
                     + f"{{ &{copyright_data_name}[{part['file_index']}], {len(part['Files'])} }}, "
                     + f"{{ &{copyright_data_name}[{part['copyright_index']}], {len(part['Copyright'])} }} }},\n"
                 )
@@ -106,7 +108,7 @@ def license_builder(target, source, env):
         result = ""
         for project_name, project in iter(src_copyright["projects"].items()):
             result += (
-                f'\t\t{{ "{env.to_escaped_cstring(project_name)}", '
+                f'\t\t{{ "{build.string.to_escaped_cstring(project_name)}", '
                 + f"{{ &{copyright_parts_name}[{part_indexes[project_name]}], {len(project)} }} }},\n"
             )
         return result
@@ -115,8 +117,8 @@ def license_builder(target, source, env):
         result = ""
         for license in iter(src_copyright["licenses"]):
             result += (
-                f'\t\t{{ "{env.to_escaped_cstring(license[0])}",'
-                + f'\n\t\t  {env.to_raw_cstring([line if line != "." else "" for line in license[1:]])} }}, \n'
+                f'\t\t{{ "{build.string.to_escaped_cstring(license[0])}",'
+                + f"\n\t\t  {build.string.to_raw_cstring([line if line != '.' else '' for line in license[1:]])} }}, \n"
             )
         return result
 
@@ -132,7 +134,7 @@ def license_builder(target, source, env):
 
 namespace OpenVic {{
 	static constexpr std::string_view {license_text_name} = {{
-		{env.to_raw_cstring(license_text)}
+		{build.string.to_raw_cstring(license_text)}
 	}};
 
 	struct {component_copyright_part_name} {{

@@ -163,4 +163,6 @@ cython_debug/
 
 # When configure fails, SCons outputs these
 config.log
-.sconf_temp
+.sconsign*.dblite
+.scons_env.json
+.scons_node_count

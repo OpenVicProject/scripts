@@ -1,5 +1,5 @@
-# Based on https://github.com/godotengine/godot-cpp/blob/e83fd0904c13356ed1d4c3d09f8bb9132bdc6b77/tools/linux.py
-from build import common_compiler_flags
+# Based on https://github.com/godotengine/godot-cpp/blob/ba0edfed90512ec64aba51d4295a3e7e30112f86/tools/linux.py
+import scripts_flags
 from SCons.Variables import BoolVariable
 from SCons.Tool import clang, clangxx
 
@@ -25,6 +25,10 @@ def generate(env):
     elif env.use_hot_reload:
         # Required for hot reload support.
         env.Append(CXXFLAGS=["-fno-gnu-unique"])
+
+    if env.use_hot_reload:
+        # Reload won't work with "use_static_cpp", so disable it.
+        env["use_static_cpp"] = False
 
     env.Append(CCFLAGS=["-fPIC", "-Wwrite-strings"])
     env.Append(LINKFLAGS=["-Wl,-R,'$$ORIGIN'"])
@@ -91,4 +95,4 @@ def generate(env):
     if env["lto"] == "auto":
         env["lto"] = "full"
 
-    common_compiler_flags.generate(env)
+    scripts_flags.generate(env)

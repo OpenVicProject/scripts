@@ -1,8 +1,8 @@
-# Based on https://github.com/godotengine/godot-cpp/blob/98ea2f60bb3846d6ae410d8936137d1b099cd50b/tools/macos.py
+# Based on https://github.com/godotengine/godot-cpp/blob/ba0edfed90512ec64aba51d4295a3e7e30112f86/tools/macos.py
 import os
 import sys
 
-from build import common_compiler_flags
+import scripts_flags
 from SCons.Variables import BoolVariable
 
 
@@ -102,4 +102,4 @@ def generate(env):
     if env["lto"] == "auto":
         env["lto"] = "none"
 
-    common_compiler_flags.generate(env)
+    scripts_flags.generate(env)

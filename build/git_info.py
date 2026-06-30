@@ -2,7 +2,7 @@ import os
 import subprocess
 
 
-def get_git_tag(prefix):
+def get_git_tag(env, prefix):
     tag_var_name = f"{prefix}_TAG"
     git_tag = ""
     if tag_var_name in os.environ:
@@ -22,7 +22,7 @@ def get_git_tag(prefix):
     return git_tag
 
 
-def get_git_release(prefix):
+def get_git_release(env, prefix):
     release_var_name = f"{prefix}_RELEASE"
     git_release = ""
     if release_var_name in os.environ:
@@ -39,14 +39,14 @@ def get_git_release(prefix):
                 git_release = result
         except (subprocess.CalledProcessError, OSError):
             # `gh` not found in PATH.
-            git_tag = get_git_tag(prefix)
+            git_tag = get_git_tag(env, prefix)
             if git_tag != "<tag missing>":
                 git_release = git_tag
 
     return git_release
 
 
-def get_git_hash():
+def get_git_hash(env):
     # Parse Git hash if we're in a Git repo.
     git_hash = "0000000000000000000000000000000000000000"
     git_folder = ".git"
@@ -101,9 +101,14 @@ def get_git_hash():
     }
 
 
-def get_git_info(name_prefix="project"):
+def get_git_info(env, name_prefix=None):
+    name_prefix = env.get("name_prefix", "project")
     prefix_upper = name_prefix.upper()
-    return {**get_git_hash(), "git_tag": get_git_tag(prefix_upper), "git_release": get_git_release(prefix_upper)}
+    return {
+        **get_git_hash(env),
+        "git_tag": get_git_tag(env, prefix_upper),
+        "git_release": get_git_release(env, prefix_upper),
+    }
 
 
 def git_builder(target, source, env):

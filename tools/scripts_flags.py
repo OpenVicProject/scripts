@@ -1,6 +1,10 @@
-# Based on https://github.com/godotengine/godot-cpp/blob/98ea2f60bb3846d6ae410d8936137d1b099cd50b/tools/common_compiler_flags.py
+# Based on https://github.com/godotengine/godot-cpp/blob/ba0edfed90512ec64aba51d4295a3e7e30112f86/tools/common_compiler_flags.py
 import os
 import subprocess
+
+
+def using_emcc(env):
+    return "emcc" in os.path.basename(env["CC"])
 
 
 def using_clang(env):
@@ -29,14 +33,11 @@ def generate(env):
 
     # Require C++20
     if env.get("is_msvc", False):
-        env.Append(CXXFLAGS=["/std:c++20"])
+        env.Prepend(CXXFLAGS=["/std:c++20"])
     else:
-        env.Append(CXXFLAGS=["-std=c++20"])
+        env.Prepend(CXXFLAGS=["-std=c++20"])
 
-    if env["precision"] == "double":
-        env.Append(CPPDEFINES=["REAL_T_IS_DOUBLE"])
-
-    # Disable exception handling. Godot doesn't use exceptions anywhere, and this
+    # Disable exception handling. We doesn't use exceptions anywhere, and this
     # saves around 20% of binary size and very significant build time.
     if env["disable_exceptions"]:
         if env.get("is_msvc", False):
@@ -48,57 +49,57 @@ def generate(env):
 
     if not env.get("is_msvc", False):
         if env["symbols_visibility"] == "visible":
-            env.Append(CCFLAGS=["-fvisibility=default"])
-            env.Append(LINKFLAGS=["-fvisibility=default"])
+            env.AppendUnique(CCFLAGS=["-fvisibility=default"])
+            env.AppendUnique(LINKFLAGS=["-fvisibility=default"])
         elif env["symbols_visibility"] == "hidden":
-            env.Append(CCFLAGS=["-fvisibility=hidden"])
-            env.Append(LINKFLAGS=["-fvisibility=hidden"])
+            env.AppendUnique(CCFLAGS=["-fvisibility=hidden"])
+            env.AppendUnique(LINKFLAGS=["-fvisibility=hidden"])
 
     if env["optimize"] == "speed":
-        env.Append(CPPDEFINES=["OPT_SPEED_ENABLED"])
+        env.AppendUnique(CPPDEFINES=["OPT_SPEED_ENABLED"])
     elif env["optimize"] == "speed_trace":
-        env.Append(CPPDEFINES=["OPT_SPEED_TRACE_ENABLED"])
+        env.AppendUnique(CPPDEFINES=["OPT_SPEED_TRACE_ENABLED"])
     elif env["optimize"] == "size":
-        env.Append(CPPDEFINES=["OPT_SIZE_ENABLED"])
+        env.AppendUnique(CPPDEFINES=["OPT_SIZE_ENABLED"])
     elif env["optimize"] == "debug":
-        env.Append(CPPDEFINES=["OPT_DEBUG_ENABLED"])
+        env.AppendUnique(CPPDEFINES=["OPT_DEBUG_ENABLED"])
 
     if env["harden_memory"] == "fast":
-        env.Append(CPPDEFINES=["_GLIBCXX_ASSERTIONS", ("_LIBCPP_HARDENING_MODE", "_LIBCPP_HARDENING_MODE_FAST"), ("_MSVC_STL_HARDENING", 1)])
+        env.AppendUnique(CPPDEFINES=["_GLIBCXX_ASSERTIONS", ("_LIBCPP_HARDENING_MODE", "_LIBCPP_HARDENING_MODE_FAST"), ("_MSVC_STL_HARDENING", 1)])
 
     # Set optimize and debug_symbols flags.
     # "custom" means do nothing and let users set their own optimization flags.
     if env.get("is_msvc", False):
         if env["debug_symbols"]:
-            env.Append(CCFLAGS=["/Zi", "/FS"])
-            env.Append(LINKFLAGS=["/DEBUG:FULL"])
+            env.AppendUnique(CCFLAGS=["/Zi", "/FS"])
+            env.AppendUnique(LINKFLAGS=["/DEBUG:FULL"])
 
         if env["disable_rtti"]:
-            env.Append(CCFLAGS=["/GR-"])
+            env.AppendUnique(CCFLAGS=["/GR-"])
 
         if env["optimize"] == "speed":
-            env.Append(CCFLAGS=["/O2"])
-            env.Append(LINKFLAGS=["/OPT:REF"])
+            env.AppendUnique(CCFLAGS=["/O2"])
+            env.AppendUnique(LINKFLAGS=["/OPT:REF"])
         elif env["optimize"] == "speed_trace":
-            env.Append(CCFLAGS=["/O2"])
-            env.Append(LINKFLAGS=["/OPT:REF", "/OPT:NOICF"])
+            env.AppendUnique(CCFLAGS=["/O2"])
+            env.AppendUnique(LINKFLAGS=["/OPT:REF", "/OPT:NOICF"])
         elif env["optimize"] == "size":
-            env.Append(CCFLAGS=["/O1"])
-            env.Append(LINKFLAGS=["/OPT:REF"])
+            env.AppendUnique(CCFLAGS=["/O1"])
+            env.AppendUnique(LINKFLAGS=["/OPT:REF"])
         elif env["optimize"] == "debug" or env["optimize"] == "none":
-            env.Append(CCFLAGS=["/Od"])
+            env.AppendUnique(CCFLAGS=["/Od"])
 
         if env["lto"] == "thin":
             if not env["use_llvm"]:
                 print("ThinLTO is only compatible with LLVM, use `use_llvm=yes` or `lto=full`.")
                 env.Exit(255)
 
-            env.Append(CCFLAGS=["-flto=thin"])
-            env.Append(LINKFLAGS=["-flto=thin"])
+            env.AppendUnique(CCFLAGS=["-flto=thin"])
+            env.AppendUnique(LINKFLAGS=["-flto=thin"])
         elif env["lto"] == "full":
             if env["use_llvm"]:
-                env.Append(CCFLAGS=["-flto"])
-                env.Append(LINKFLAGS=["-flto"])
+                env.AppendUnique(CCFLAGS=["-flto"])
+                env.AppendUnique(LINKFLAGS=["-flto"])
             else:
                 env.AppendUnique(CCFLAGS=["/GL"])
                 env.AppendUnique(ARFLAGS=["/LTCG"])
@@ -107,39 +108,45 @@ def generate(env):
         if env["debug_symbols"]:
             # Adding dwarf-4 explicitly makes stacktraces work with clang builds,
             # otherwise addr2line doesn't understand them.
-            env.Append(CCFLAGS=["-gdwarf-4"])
-            if env.dev_build:
-                env.Append(CCFLAGS=["-g3"])
+            env.AppendUnique(CCFLAGS=["-gdwarf-4"])
+            if using_emcc(env):
+                # Emscripten only produces dwarf symbols when using "-g3".
+                env.AppendUnique(CCFLAGS=["-g3"])
+                # Emscripten linker needs debug symbols options too.
+                env.AppendUnique(LINKFLAGS=["-gdwarf-4"])
+                env.AppendUnique(LINKFLAGS=["-g3"])
+            elif env.dev_build:
+                env.AppendUnique(CCFLAGS=["-g3"])
             else:
-                env.Append(CCFLAGS=["-g2"])
+                env.AppendUnique(CCFLAGS=["-g2"])
         else:
             if using_clang(env) and not is_vanilla_clang(env) and not env["use_mingw"]:
                 # Apple Clang, its linker doesn't like -s.
-                env.Append(LINKFLAGS=["-Wl,-S", "-Wl,-x", "-Wl,-dead_strip"])
+                env.AppendUnique(LINKFLAGS=["-Wl,-S", "-Wl,-x", "-Wl,-dead_strip"])
             else:
-                env.Append(LINKFLAGS=["-s"])
+                env.AppendUnique(LINKFLAGS=["-s"])
 
         if env["disable_rtti"]:
-            env.Append(CCFLAGS=["-fno-rtti"])
+            env.AppendUnique(CCFLAGS=["-fno-rtti"])
 
         if env["optimize"] == "speed":
-            env.Append(CCFLAGS=["-O3"])
+            env.AppendUnique(CCFLAGS=["-O3"])
         # `-O2` is friendlier to debuggers than `-O3`, leading to better crash backtraces.
         elif env["optimize"] == "speed_trace":
-            env.Append(CCFLAGS=["-O2"])
+            env.AppendUnique(CCFLAGS=["-O2"])
         elif env["optimize"] == "size":
-            env.Append(CCFLAGS=["-Os"])
+            env.AppendUnique(CCFLAGS=["-Os"])
         elif env["optimize"] == "debug":
-            env.Append(CCFLAGS=["-Og"])
+            env.AppendUnique(CCFLAGS=["-Og"])
         elif env["optimize"] == "none":
-            env.Append(CCFLAGS=["-O0"])
+            env.AppendUnique(CCFLAGS=["-O0"])
 
         if env["lto"] == "thin":
             if (env["platform"] == "windows" or env["platform"] == "linux") and not env["use_llvm"]:
                 print("ThinLTO is only compatible with LLVM, use `use_llvm=yes` or `lto=full`.")
                 env.Exit(255)
-            env.Append(CCFLAGS=["-flto=thin"])
-            env.Append(LINKFLAGS=["-flto=thin"])
+            env.AppendUnique(CCFLAGS=["-flto=thin"])
+            env.AppendUnique(LINKFLAGS=["-flto=thin"])
         elif env["lto"] == "full":
-            env.Append(CCFLAGS=["-flto"])
-            env.Append(LINKFLAGS=["-flto"])
+            env.AppendUnique(CCFLAGS=["-flto"])
+            env.AppendUnique(LINKFLAGS=["-flto"])

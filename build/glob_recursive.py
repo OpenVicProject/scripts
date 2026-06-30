@@ -1,11 +1,14 @@
 def GlobRecursive(pattern, nodes=["."], exclude=None):
-    import fnmatch
     import os
 
     import SCons
 
     fs = SCons.Node.FS.get_default_fs()
     Glob = fs.Glob
+    Dir = fs.Dir
+
+    if not isinstance(nodes, list):
+        nodes = [nodes]
 
     if isinstance(exclude, str):
         exclude = [exclude]
@@ -14,27 +17,32 @@ def GlobRecursive(pattern, nodes=["."], exclude=None):
     for node in nodes:
         node_str = str(node)
 
-        for f in Glob(node_str + "/*", source=True):
+        for f in Glob(f"{node_str}/*", source=True):
             if type(f) is SCons.Node.FS.Dir:
-                child = node_str + "/" + os.path.basename(str(f))
+                child = os.path.join(node_str, f.name)
                 results += GlobRecursive(pattern, [child])
 
-        results += Glob(node_str + "/" + pattern)
+        results += Glob(f"{node_str}/{pattern}")
 
     if isinstance(exclude, list):
+        val_to_remove = set()
+        for e in exclude:
+            for index in range(len(results)):
+                val = results[index]
+                for node in nodes:
+                    if str(val) == str(Dir(node).File(e)):
+                        val_to_remove.add(val)
 
-        def norm(s):
-            return str(s).replace("\\", "/")
+        for val in val_to_remove:
+            results.remove(val)
 
-        norm_exclude = [norm(p) for p in exclude]
-        results = [r for r in results if not any(fnmatch.fnmatch(norm(r), p) for p in norm_exclude)]
     return results
 
 
 def GlobRecursiveVariant(env, pattern, src_root, variant_root, exclude=None):
     src_nodes = GlobRecursive(pattern, [src_root])
     src_abs = env.Dir(src_root).abspath.replace("\\", "/").rstrip("/") + "/"
-    variant_prefix = env.Dir(variant_root).abspath.replace("\\", "/").rstrip("/") + "/"
+    variant_prefix = env.Dir(variant_root).srcnode().abspath.replace("\\", "/").rstrip("/") + "/"
     if exclude is None:
         exclude_abs = set()
     else:

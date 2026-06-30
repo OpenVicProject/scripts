@@ -1,3 +1,6 @@
+import build.string
+
+
 def author_builder(target, source, env):
     name_prefix = env.get("name_prefix", "project")
     prefix_upper = name_prefix.upper()
@@ -29,7 +32,7 @@ namespace OpenVic {
 
         for line in buffer.decode().splitlines():
             if line.startswith("    ") and reading:
-                file.write(f'\t\t"{env.to_escaped_cstring(line).strip()}",\n')
+                file.write(f'\t\t"{build.string.to_escaped_cstring(line).strip()}",\n')
             elif line.startswith("## "):
                 if reading:
                     close_section()

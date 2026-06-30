@@ -1,9 +1,10 @@
-# Based on https://github.com/godotengine/godot-cpp/blob/98ea2f60bb3846d6ae410d8936137d1b099cd50b/tools/windows.py
+# Based on https://github.com/godotengine/godot-cpp/blob/ba0edfed90512ec64aba51d4295a3e7e30112f86/tools/windows.py
 import os
 import sys
 
-from build import common_compiler_flags
+import scripts_flags
 import my_spawn
+import SCons.Platform
 from SCons.Tool import mingw, msvc
 from SCons.Variables import BoolVariable
 
@@ -90,8 +91,6 @@ def exists(env):
 
 
 def generate(env):
-    base = None
-
     msvc_found = msvc.exists(env)
     mingw_found = mingw.exists(env)
 
@@ -121,9 +120,13 @@ def generate(env):
         env.Tool("mslib")
         env.Tool("mslink")
 
-        env.Append(CPPDEFINES=["TYPED_METHOD_BIND", "NOMINMAX"])
-        env.Append(CCFLAGS=["/utf-8", "/Zc:preprocessor"])
-        env.Append(LINKFLAGS=["/WX"])
+        # HACK: This prevents errorneous use of GNU's link, but ensures we never use the correct version of MSVC's link.exe
+        # TODO: No idea why SCons cannot find correct link.exe, figure out why and fix it
+        env["LINK"] = f"\"{env.WhereIs('link.exe')}\""
+
+        env.AppendUnique(CPPDEFINES=["TYPED_METHOD_BIND", "NOMINMAX"])
+        env.AppendUnique(CCFLAGS=["/utf-8", "/Zc:preprocessor"])
+        env.AppendUnique(LINKFLAGS=["/WX"])
 
         if env["use_llvm"]:
             env["CC"] = "clang-cl"
@@ -230,4 +233,4 @@ def generate(env):
         else:  # Release
             env["lto"] = "full"
 
-    common_compiler_flags.generate(env)
+    scripts_flags.generate(env)
