@@ -34,6 +34,8 @@ if sys.platform.startswith("linux"):
     default_platform = "linux"
 elif sys.platform == "darwin":
     default_platform = "macos"
+elif sys.platform.startswith("openbsd"):
+    default_platform = "openbsd" 
 elif sys.platform == "win32" or sys.platform == "msys":
     default_platform = "windows"
 elif ARGUMENTS.get("platform", ""):
@@ -87,7 +89,7 @@ architecture_aliases = {
     "ppc64le": "ppc64",
 }
 
-platforms = ("linux", "macos", "windows", "android", "ios", "web")
+platforms = ("linux", "macos", "windows", "openbsd", "android", "ios", "web")
 unsupported_known_platforms = ("android", "ios", "web")
 
 def SetupOptions():
