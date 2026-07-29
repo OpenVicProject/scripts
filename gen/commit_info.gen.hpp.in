@@ -1,0 +1,13 @@
+/* THIS FILE IS GENERATED. EDITS WILL BE LOST. */
+
+#pragma once
+
+#include <cstdint>
+#include <string_view>
+
+namespace OpenVic {
+	static constexpr std::string_view @PREFIX_UPPER@_TAG = "@GIT_TAG@";
+	static constexpr std::string_view @PREFIX_UPPER@_RELEASE = "@GIT_RELEASE@";
+	static constexpr std::string_view @PREFIX_UPPER@_COMMIT_HASH = "@GIT_HASH@";
+	static constexpr const uint64_t @PREFIX_UPPER@_COMMIT_TIMESTAMP = @GIT_TIMESTAMP@ull;
+}
