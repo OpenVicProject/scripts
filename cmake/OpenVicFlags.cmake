@@ -39,7 +39,7 @@ macro(openvic_setup_base_flags)
             set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
         endif()
 
-        set(CMAKE_CXX_STANDARD 20)
+        set(CMAKE_CXX_STANDARD 23)
         set(CMAKE_CXX_STANDARD_REQUIRED ON)
         set(CMAKE_CXX_EXTENSIONS OFF)
         set(CMAKE_POSITION_INDEPENDENT_CODE ON)
